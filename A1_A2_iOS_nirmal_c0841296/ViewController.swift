@@ -13,7 +13,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     // created location manager instance
     var locationManager: CLLocationManager = CLLocationManager()
     // initialize place variable
-    var places: Place = [Place]()
+    var places: [Place] = [Place]()
     
     @IBOutlet weak var mapView: MKMapView!
     
@@ -26,6 +26,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
 
     public func requestLocationAccessAuthorization () {
         self.locationManager.delegate = self
+        // disable zoom when user double taps
+        self.mapView.isZoomEnabled = false
         
         // setting the desired accuracy of the location to best accuracy
         self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
@@ -42,9 +44,10 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         self.locationManager.startUpdatingLocation()
         
         // long press gesture initialization
-        let longPressGestureRecognizer: UILongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(addLongPressGestureRecognizerAnnotation))
+        let tapGestureRecognizer: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(addTapGestureRecognizerAnnotation))
+        tapGestureRecognizer.numberOfTapsRequired = 2
         
-        self.mapView.addGestureRecognizer(longPressGestureRecognizer)
+        self.mapView.addGestureRecognizer(tapGestureRecognizer)
     }
     
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -78,13 +81,35 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     }
     
     // add annotation to gesture recognizer
-    @objc public func addLongPressGestureRecognizerAnnotation (userGestureRecognizer: UIGestureRecognizer) {
+    @objc public func addTapGestureRecognizerAnnotation (userGestureRecognizer: UIGestureRecognizer) {
         let longPressPoint = userGestureRecognizer.location(in: self.mapView)
         let longPressCoordinate = self.mapView.convert(longPressPoint, toCoordinateFrom: self.mapView)
+        let placesCount = self.places.count
+        var title: String = ""
         
+        switch placesCount {
+            case 0:
+                title = "A"
+                break
+            
+            case 1:
+                title = "B"
+                break
+
+            case 2:
+                title = "C"
+                break
+            
+            default:
+                break
+        }
+        
+        let place: Place = Place(title: title, coordinate: longPressCoordinate)
+        self.places.append(place)
+        print(self.places.count)
         let longPressAnnotation = MKPointAnnotation()
         longPressAnnotation.coordinate = longPressCoordinate
-        longPressAnnotation.title = "A"
+        longPressAnnotation.title = title
         
         self.mapView.addAnnotation(longPressAnnotation)
     }
