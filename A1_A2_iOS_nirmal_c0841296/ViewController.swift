@@ -6,14 +6,27 @@
 //
 
 import UIKit
+import MapKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, CLLocationManagerDelegate {
 
+    // created location manager instance
+    var locationManager: CLLocationManager = CLLocationManager()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        requestLocationAccessAuthorization()
         // Do any additional setup after loading the view.
     }
 
-
+    public func requestLocationAccessAuthorization () {
+        self.locationManager.delegate = self
+        let currentStatus = CLLocationManager.authorizationStatus()
+        
+        // only proceed below to ask for permission if the status is not determined
+        guard currentStatus ==  .notDetermined else {return}
+        
+        self.locationManager.requestWhenInUseAuthorization()
+    }
 }
 
