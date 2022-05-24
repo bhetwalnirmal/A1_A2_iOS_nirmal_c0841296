@@ -12,6 +12,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
 
     // created location manager instance
     var locationManager: CLLocationManager = CLLocationManager()
+    // initialize place variable
+    var places: Place = [Place]()
     
     @IBOutlet weak var mapView: MKMapView!
     
@@ -38,6 +40,11 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         // start getting the user location
         self.locationManager.startUpdatingLocation()
+        
+        // long press gesture initialization
+        let longPressGestureRecognizer: UILongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(addLongPressGestureRecognizerAnnotation))
+        
+        self.mapView.addGestureRecognizer(longPressGestureRecognizer)
     }
     
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -68,6 +75,18 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         annotation.title = "You are Here!"
         // attach and display the annotation in the map
         self.mapView.addAnnotation(annotation)
+    }
+    
+    // add annotation to gesture recognizer
+    @objc public func addLongPressGestureRecognizerAnnotation (userGestureRecognizer: UIGestureRecognizer) {
+        let longPressPoint = userGestureRecognizer.location(in: self.mapView)
+        let longPressCoordinate = self.mapView.convert(longPressPoint, toCoordinateFrom: self.mapView)
+        
+        let longPressAnnotation = MKPointAnnotation()
+        longPressAnnotation.coordinate = longPressCoordinate
+        longPressAnnotation.title = "A"
+        
+        self.mapView.addAnnotation(longPressAnnotation)
     }
 }
 
