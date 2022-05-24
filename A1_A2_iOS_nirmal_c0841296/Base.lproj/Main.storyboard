@@ -29,6 +29,9 @@
                             <constraint firstItem="lOS-PR-PSO" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="eUa-XE-SeQ"/>
                         </constraints>
                     </view>
+                    <connections>
+                        <outlet property="mapView" destination="lOS-PR-PSO" id="u3w-hW-Z4i"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
