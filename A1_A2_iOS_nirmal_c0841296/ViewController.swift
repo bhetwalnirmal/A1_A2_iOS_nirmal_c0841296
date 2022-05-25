@@ -100,44 +100,114 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         let placesCount = self.places.count
         var title: String = ""
         
-        switch placesCount {
-            case 0:
-                title = "A"
-                self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
-                break
-            
-            case 1:
-                title = "B"
-                self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
-                break
-
-            case 2:
-                title = "C"
-                self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
-                
-                addTriangle()
-                displayDistanceBetweenMarkers()
-                break
-            
-            default:
-                // remove annotations and overlays
-                removeAnnotations()
-                removeOverlays()
+        let nearByLocationIndex = findNearByLocationIndex(coordinate: doubleTapCoordinate)
         
-                self.places = [Place]()
-                // remove annotations and overlays and return
-                return
+        // if location == -1 then the location is not nearby location
+        if nearByLocationIndex == -1 {
+            switch placesCount {
+                case 0:
+                    title = "A"
+                    self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
+                    break
+                
+                case 1:
+                    title = "B"
+                    self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
+                    break
+
+                case 2:
+                    title = "C"
+                    self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
+                    
+                    addTriangle()
+                    displayDistanceBetweenMarkers()
+                    break
+                
+                default:
+                    // remove annotations and overlays
+                    removeAnnotations()
+                    removeOverlays()
+            
+                    self.places = [Place]()
+                    // remove annotations and overlays and return
+                    return
+            }
+            
+            // create tap annotation
+            let tapAnnotation = MKPointAnnotation()
+            // set the coordinate
+            tapAnnotation.coordinate = doubleTapCoordinate
+            // set the title
+            tapAnnotation.title = title
+
+            // add annotation on map
+            self.mapView.addAnnotation(tapAnnotation)
+            
+        } else {
+            removeAnnotationandOverlayOf(place: places[nearByLocationIndex])
+            self.removePlace(index: nearByLocationIndex)
+            
+            // reset annotations after removing the place
+            resetAnnotations()
+        }
+    }
+    
+    // remove annotation and overlay of a single place
+    func removeAnnotationandOverlayOf(place: Place) {
+        for annotation in self.mapView.annotations {
+            if annotation.title == place.title {
+                self.mapView.removeAnnotation(annotation)
+            }
         }
         
-        // create tap annotation
-        let tapAnnotation = MKPointAnnotation()
-        // set the coordinate
-        tapAnnotation.coordinate = doubleTapCoordinate
-        // set the title
-        tapAnnotation.title = title
+        for overlay in self.mapView.overlays {
+            if overlay.title == place.title {
+                self.mapView.removeOverlay(overlay)
+            }
+        }
+    }
+    
+    func removePlace (index: Int) {
+        places.remove(at: index)
+        // if the value of index is 2 then update the title of the marker
+        if index == 0 {
+            places[0].title = "A"
+            // reset annotations of all place and attach annotations
+            resetAnnotations()
+        }
+    }
+    
+    func resetAnnotations () {
+        removeAnnotations()
+        removeOverlays()
         
-        // add annotation on map
-        self.mapView.addAnnotation(tapAnnotation)
+        addAnnotationsOfAllPlaces()
+    }
+    
+    func addAnnotationsOfAllPlaces () {
+        for place in places {
+            // create annotation
+            let annotation = MKPointAnnotation()
+            // set the coordinate
+            annotation.coordinate = place.coordinate
+            // set the title
+            annotation.title = place.title
+
+            // add annotation on map
+            self.mapView.addAnnotation(annotation)
+        }
+    }
+    
+    // finds the index of nearest location and return the index
+    func findNearByLocationIndex (coordinate: CLLocationCoordinate2D) -> Int {
+        for (index, place) in places.enumerated() {
+            // assume area < 500 is nearby area
+            if (calculateDistanceBetweenTwoLocation(sourceLocation: coordinate, destinationLocation: place.coordinate) < 500){
+               return index
+           }
+       }
+        
+       return -1;
     }
     
     public func addDoubleTapGestureRecognizer () {
@@ -251,6 +321,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         }
     }
     
+    // taken reference from stack overflow
+    // link: https://stackoverflow.com/questions/44142184/add-a-label-in-the-center-of-a-polygon-in-mapkit
     func getCenterCoordinateBetweenTwoPoints(_ LocationPoints: [CLLocationCoordinate2D]) -> CLLocationCoordinate2D{
         var x:Float = 0.0;
         var y:Float = 0.0;
@@ -272,6 +344,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         let resultHyp = sqrt(x * x + y * y);
         let resultLat = atan2(z, resultHyp);
         let result = CLLocationCoordinate2D(latitude: CLLocationDegrees(GLKMathRadiansToDegrees(Float(resultLat))), longitude: CLLocationDegrees(GLKMathRadiansToDegrees(Float(resultLong))));
+        
         return result;
     }
 }
