@@ -7,6 +7,7 @@
 
 import UIKit
 import MapKit
+import GLKit
 
 class ViewController: UIViewController, CLLocationManagerDelegate {
 
@@ -106,11 +107,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                 self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
                 
                 addTriangle()
+                drawRoute()
                 break
             
             default:
                 // remove annotations and overlays
-                removeAnnotationsAndOverlays()
+                removeAnnotations()
+                removeOverlays()
         
                 self.places = [Place]()
                 // remove annotations and overlays and return
@@ -146,12 +149,14 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         self.mapView.addOverlay(polygon)
     }
     
-    func removeAnnotationsAndOverlays () {
+    func removeAnnotations () {
         // remove annotations from map
         for annotation in mapView.annotations {
             mapView.removeAnnotation(annotation)
         }
-        
+    }
+    
+    func removeOverlays () {
         // remove overlays from map
         for overlay in mapView.overlays {
             mapView.removeOverlay(overlay)
@@ -171,6 +176,49 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         return distance
     }
+    
+    public func drawRoute () {
+        drawRouteBetweenMarkers(source: places[0].coordinate, destination: places[1].coordinate)
+        drawRouteBetweenMarkers(source: places[1].coordinate, destination: places[2].coordinate)
+        drawRouteBetweenMarkers(source: places[2].coordinate, destination: places[0].coordinate)
+    }
+    
+    public func drawRouteBetweenMarkers (source: CLLocationCoordinate2D, destination: CLLocationCoordinate2D) {
+        if self.places.count < 3 {
+            return
+        }
+        
+        removeOverlays()
+        
+        let sourcePlaceMark = MKPlacemark(coordinate: source)
+        let destinationPlaceMark = MKPlacemark(coordinate: destination)
+        
+        // request a direction
+        let directionRequest = MKDirections.Request()
+        
+        // assign the source and destination properties of the request
+        directionRequest.source = MKMapItem(placemark: sourcePlaceMark)
+        directionRequest.destination = MKMapItem(placemark: destinationPlaceMark)
+        
+        // transportation type
+        directionRequest.transportType = .walking
+        
+        // calculate the direction
+        let directions = MKDirections(request: directionRequest)
+        directions.calculate { (response, error) in
+            guard let directionResponse = response else {return}
+            // create the route
+            let route = directionResponse.routes[0]
+            // drawing a polyline
+            self.mapView.addOverlay(route.polyline, level: .aboveRoads)
+            
+            // define the bounding map rect
+            let rect = route.polyline.boundingMapRect
+            self.mapView.setVisibleMapRect(rect, edgePadding: UIEdgeInsets(top: 100, left: 100, bottom: 100, right: 100), animated: true)
+            
+//            self.map.setRegion(MKCoordinateRegion(rect), animated: true)
+        }
+    }
 }
 
 extension ViewController: MKMapViewDelegate {
@@ -187,7 +235,13 @@ extension ViewController: MKMapViewDelegate {
             // set the line width to 2
             rendrer.lineWidth = 2
             return rendrer
+        } else if overlay is MKPolyline {
+            let rendrer = MKPolylineRenderer(overlay: overlay)
+            rendrer.strokeColor = UIColor.blue
+            rendrer.lineWidth = 3
+            return rendrer
         }
+        
         return MKOverlayRenderer()
     }
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
@@ -204,10 +258,7 @@ extension ViewController: MKMapViewDelegate {
     
     // function to display detail view
     func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-        // get the latitude and longitude of annotaion view
-        let lat = (view.annotation?.coordinate.latitude)!;
-        let long = view.annotation?.coordinate.longitude;
-        
+        // get the view annotation
         if let annotation = view.annotation {
             let markerLocation = annotation.coordinate
             
@@ -223,7 +274,7 @@ extension ViewController: MKMapViewDelegate {
         // display the distance between the user and the marker
         let message = String(format: "The distance from this point to user's location is %.2f", distance)
         
-        let alertController = UIAlertController(title: "Distance in meter", message: message, preferredStyle: .alert)
+        let alertController = UIAlertController(title: "Distance between user and point", message: message, preferredStyle: .alert)
         let cancelAction = UIAlertAction(title: "OK", style: .cancel, handler: nil)
         
         alertController.addAction(cancelAction)
