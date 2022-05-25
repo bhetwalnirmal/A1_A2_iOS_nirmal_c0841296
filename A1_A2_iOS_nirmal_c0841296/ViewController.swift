@@ -132,11 +132,19 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                     // remove annotations and overlays and return
                     return
             }
+            
+            // create tap annotation
+            let tapAnnotation = MKPointAnnotation()
+            // set the coordinate
+            tapAnnotation.coordinate = doubleTapCoordinate
+            // set the title
+            tapAnnotation.title = title
+
+            // add annotation on map
+            self.mapView.addAnnotation(tapAnnotation)
         } else {
+            removeAnnotationOf(place: places[nearByLocationIndex])
             self.removePlace(index: nearByLocationIndex)
-            removeOverlays()
-            removeAnnotations()
-            print("places count \(self.places.count)")
             
             for place in self.places {
                 let annotation = MKPointAnnotation()
@@ -157,18 +165,21 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                     self.mapView.removeOverlay(overlay)
                 }
             }
-            
+        }
+    }
+    
+    func removeAnnotationOf(place: Place) {
+        for annotation in self.mapView.annotations {
+            if annotation.title == place.title {
+                self.mapView.removeAnnotation(annotation)
+            }
         }
         
-        // create tap annotation
-        let tapAnnotation = MKPointAnnotation()
-        // set the coordinate
-        tapAnnotation.coordinate = doubleTapCoordinate
-        // set the title
-        tapAnnotation.title = title
-        
-        // add annotation on map
-        self.mapView.addAnnotation(tapAnnotation)
+        for overlay in self.mapView.overlays {
+            if overlay.title == place.title {
+                self.mapView.removeOverlay(overlay)
+            }
+        }
     }
     
     func removePlace (index: Int) {
@@ -178,6 +189,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     // finds the index of nearest location and return the index
     func findNearByLocationIndex (coordinate: CLLocationCoordinate2D) -> Int {
         for (index, place) in places.enumerated() {
+            // assume area < 500 is nearby area
             if (calculateDistanceBetweenTwoLocation(sourceLocation: coordinate, destinationLocation: place.coordinate) < 500){
                return index
            }
