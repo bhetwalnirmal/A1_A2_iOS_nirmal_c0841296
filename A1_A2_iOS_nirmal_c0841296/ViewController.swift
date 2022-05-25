@@ -35,6 +35,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         self.mapView.delegate = self
     }
 
+    @IBAction func displayRouteBetweenMarkers(_ sender: UIButton) {
+        // draw route between markers
+        drawRouteBetweenMarkers(source: places[0].coordinate, destination: places[1].coordinate)
+        drawRouteBetweenMarkers(source: places[1].coordinate, destination: places[2].coordinate)
+        drawRouteBetweenMarkers(source: places[2].coordinate, destination: places[0].coordinate)
+    }
+    
     public func requestLocationAccessAuthorization () {
         self.locationManager.delegate = self
         // disable zoom when user double taps
@@ -107,7 +114,6 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                 self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
                 
                 addTriangle()
-                drawRoute()
                 break
             
             default:
@@ -175,12 +181,6 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         }
         
         return distance
-    }
-    
-    public func drawRoute () {
-        drawRouteBetweenMarkers(source: places[0].coordinate, destination: places[1].coordinate)
-        drawRouteBetweenMarkers(source: places[1].coordinate, destination: places[2].coordinate)
-        drawRouteBetweenMarkers(source: places[2].coordinate, destination: places[0].coordinate)
     }
     
     public func drawRouteBetweenMarkers (source: CLLocationCoordinate2D, destination: CLLocationCoordinate2D) {
