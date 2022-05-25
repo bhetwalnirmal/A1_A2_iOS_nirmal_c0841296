@@ -14,6 +14,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     var locationManager: CLLocationManager = CLLocationManager()
     // initialize place variable
     var places: [Place] = [Place]()
+    // user location
+    var currentUserLocation: CLLocationCoordinate2D? = nil
     
     @IBOutlet weak var mapView: MKMapView!
     
@@ -42,7 +44,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         let currentStatus = CLLocationManager.authorizationStatus()
         
-        // only proceed below to ask for permission if the status is not determined
+        // if the user has already granted permission return
         guard currentStatus ==  .notDetermined else {return}
         
         // ask for the user permission
@@ -52,6 +54,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         // check if the location is available
         if let location = locations.last {
+            currentUserLocation = location.coordinate
+            
             displayUserCurrentLocation(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude, title: "You are here!")
         }
     }
@@ -126,8 +130,10 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     
     public func addDoubleTapGestureRecognizer () {
         let tapGestureRecognizer: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(addTapGestureRecognizerAnnotation))
+        // set the tap frequency to 2
         tapGestureRecognizer.numberOfTapsRequired = 2
         
+        // add the tap gesture recognizer
         self.mapView.addGestureRecognizer(tapGestureRecognizer)
     }
     
@@ -151,9 +157,26 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             mapView.removeOverlay(overlay)
         }
     }
+    
+    public func calculateDistanceBetweenUserAndMarker (markerLocation: CLLocationCoordinate2D) -> Double {
+        var distance: Double = 0
+        
+        if let uLocation = currentUserLocation {
+            // create current user location
+            let currentUserLocation = CLLocation(latitude: uLocation.latitude, longitude: uLocation.longitude)
+            
+            // calculate distance from current user location
+            distance = currentUserLocation.distance(from: CLLocation(latitude: markerLocation.latitude, longitude: markerLocation.longitude))
+        }
+        
+        return distance
+    }
 }
 
 extension ViewController: MKMapViewDelegate {
+    // for displaying annotation
+    
+
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         if overlay is MKPolygon {
             let rendrer = MKPolygonRenderer(overlay: overlay)
@@ -166,5 +189,44 @@ extension ViewController: MKMapViewDelegate {
             return rendrer
         }
         return MKOverlayRenderer()
+    }
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        switch annotation.title {
+            case "A", "B", "C":
+                let annotationView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: "markerPin")
+                annotationView.canShowCallout = true
+                annotationView.rightCalloutAccessoryView = UIButton(type: .detailDisclosure)
+                return annotationView
+            default:
+                return nil
+        }
+    }
+    
+    // function to display detail view
+    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+        // get the latitude and longitude of annotaion view
+        let lat = (view.annotation?.coordinate.latitude)!;
+        let long = view.annotation?.coordinate.longitude;
+        
+        if let annotation = view.annotation {
+            let markerLocation = annotation.coordinate
+            
+            // calling function to calculate the distance
+            let distance = calculateDistanceBetweenUserAndMarker(markerLocation: markerLocation)
+            
+            displayAnnotationAlert (distance: distance)
+        }
+    }
+    
+    // function to display annotation to the user
+    public func displayAnnotationAlert (distance: Double) {
+        // display the distance between the user and the marker
+        let message = String(format: "The distance from this point to user's location is %.2f", distance)
+        
+        let alertController = UIAlertController(title: "Distance in meter", message: message, preferredStyle: .alert)
+        let cancelAction = UIAlertAction(title: "OK", style: .cancel, handler: nil)
+        
+        alertController.addAction(cancelAction)
+        present(alertController, animated: true, completion: nil)
     }
 }
