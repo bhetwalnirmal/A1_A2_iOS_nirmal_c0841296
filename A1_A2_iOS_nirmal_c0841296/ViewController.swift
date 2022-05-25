@@ -142,33 +142,18 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
 
             // add annotation on map
             self.mapView.addAnnotation(tapAnnotation)
+            
         } else {
-            removeAnnotationOf(place: places[nearByLocationIndex])
+            removeAnnotationandOverlayOf(place: places[nearByLocationIndex])
             self.removePlace(index: nearByLocationIndex)
             
-            for place in self.places {
-                let annotation = MKPointAnnotation()
-                // set the coordinate
-                annotation.coordinate = doubleTapCoordinate
-                // set the title
-                annotation.title = title
-                
-                // add annotation on map
-                self.mapView.addAnnotation(annotation)
-                let annotationView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: "markerPin")
-                annotationView.canShowCallout = true
-                annotationView.rightCalloutAccessoryView = UIButton(type: .detailDisclosure)
-            }
-            
-            for overlay in self.mapView.overlays  {
-                if overlay.title == places[nearByLocationIndex].title {
-                    self.mapView.removeOverlay(overlay)
-                }
-            }
+            // reset annotations after removing the place
+            resetAnnotations()
         }
     }
     
-    func removeAnnotationOf(place: Place) {
+    // remove annotation and overlay of a single place
+    func removeAnnotationandOverlayOf(place: Place) {
         for annotation in self.mapView.annotations {
             if annotation.title == place.title {
                 self.mapView.removeAnnotation(annotation)
@@ -184,6 +169,33 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     
     func removePlace (index: Int) {
         places.remove(at: index)
+        // if the value of index is 2 then update the title of the marker
+        if index == 0 {
+            places[0].title = "A"
+            // reset annotations of all place and attach annotations
+            resetAnnotations()
+        }
+    }
+    
+    func resetAnnotations () {
+        removeAnnotations()
+        removeOverlays()
+        
+        addAnnotationsOfAllPlaces()
+    }
+    
+    func addAnnotationsOfAllPlaces () {
+        for place in places {
+            // create annotation
+            let annotation = MKPointAnnotation()
+            // set the coordinate
+            annotation.coordinate = place.coordinate
+            // set the title
+            annotation.title = place.title
+
+            // add annotation on map
+            self.mapView.addAnnotation(annotation)
+        }
     }
     
     // finds the index of nearest location and return the index
@@ -309,6 +321,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         }
     }
     
+    // taken reference from stack overflow
+    // link: https://stackoverflow.com/questions/44142184/add-a-label-in-the-center-of-a-polygon-in-mapkit
     func getCenterCoordinateBetweenTwoPoints(_ LocationPoints: [CLLocationCoordinate2D]) -> CLLocationCoordinate2D{
         var x:Float = 0.0;
         var y:Float = 0.0;
