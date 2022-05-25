@@ -12,6 +12,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
 
     // created location manager instance
     var locationManager: CLLocationManager = CLLocationManager()
+    // initialize place variable
+    var places: [Place] = [Place]()
     
     @IBOutlet weak var mapView: MKMapView!
     
@@ -20,10 +22,20 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         // function to setup location authorization
         requestLocationAccessAuthorization()
+        
+        // start getting the user location
+        self.locationManager.startUpdatingLocation()
+        
+        // double tap gesture initialization
+        addDoubleTapGestureRecognizer()
+
+        self.mapView.delegate = self
     }
 
     public func requestLocationAccessAuthorization () {
         self.locationManager.delegate = self
+        // disable zoom when user double taps
+        self.mapView.isZoomEnabled = false
         
         // setting the desired accuracy of the location to best accuracy
         self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
@@ -35,9 +47,6 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         // ask for the user permission
         self.locationManager.requestWhenInUseAuthorization()
-        
-        // start getting the user location
-        self.locationManager.startUpdatingLocation()
     }
     
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -69,5 +78,93 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         // attach and display the annotation in the map
         self.mapView.addAnnotation(annotation)
     }
+    
+    // add annotation to gesture recognizer
+    @objc public func addTapGestureRecognizerAnnotation (userGestureRecognizer: UIGestureRecognizer) {
+        let doubleTapPoint = userGestureRecognizer.location(in: self.mapView)
+        let doubleTapCoordinate = self.mapView.convert(doubleTapPoint, toCoordinateFrom: self.mapView)
+        let placesCount = self.places.count
+        var title: String = ""
+        
+        switch placesCount {
+            case 0:
+                title = "A"
+                self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
+                break
+            
+            case 1:
+                title = "B"
+                self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
+                break
+
+            case 2:
+                title = "C"
+                self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
+                
+                addTriangle()
+                break
+            
+            default:
+                // remove annotations and overlays
+                removeAnnotationsAndOverlays()
+        
+                self.places = [Place]()
+                // remove annotations and overlays and return
+                return
+        }
+        
+        // create tap annotation
+        let tapAnnotation = MKPointAnnotation()
+        // set the coordinate
+        tapAnnotation.coordinate = doubleTapCoordinate
+        // set the title
+        tapAnnotation.title = title
+        
+        // add annotation on map
+        self.mapView.addAnnotation(tapAnnotation)
+    }
+    
+    public func addDoubleTapGestureRecognizer () {
+        let tapGestureRecognizer: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(addTapGestureRecognizerAnnotation))
+        tapGestureRecognizer.numberOfTapsRequired = 2
+        
+        self.mapView.addGestureRecognizer(tapGestureRecognizer)
+    }
+    
+    func addTriangle() {
+        // make coordinates array
+        let coordinates = places.map {$0.coordinate}
+        // make a polygon
+        let polygon = MKPolygon(coordinates: coordinates, count: coordinates.count)
+        
+        self.mapView.addOverlay(polygon)
+    }
+    
+    func removeAnnotationsAndOverlays () {
+        // remove annotations from map
+        for annotation in mapView.annotations {
+            mapView.removeAnnotation(annotation)
+        }
+        
+        // remove overlays from map
+        for overlay in mapView.overlays {
+            mapView.removeOverlay(overlay)
+        }
+    }
 }
 
+extension ViewController: MKMapViewDelegate {
+    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+        if overlay is MKPolygon {
+            let rendrer = MKPolygonRenderer(overlay: overlay)
+            // fill the area by red color with 50% transparancy
+            rendrer.fillColor = UIColor.red.withAlphaComponent(0.5)
+            // set the color to green
+            rendrer.strokeColor = UIColor.green
+            // set the line width to 2
+            rendrer.lineWidth = 2
+            return rendrer
+        }
+        return MKOverlayRenderer()
+    }
+}
