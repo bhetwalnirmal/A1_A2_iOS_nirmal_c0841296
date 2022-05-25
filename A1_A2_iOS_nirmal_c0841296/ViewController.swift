@@ -100,33 +100,64 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         let placesCount = self.places.count
         var title: String = ""
         
-        switch placesCount {
-            case 0:
-                title = "A"
-                self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
-                break
-            
-            case 1:
-                title = "B"
-                self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
-                break
-
-            case 2:
-                title = "C"
-                self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
-                
-                addTriangle()
-                displayDistanceBetweenMarkers()
-                break
-            
-            default:
-                // remove annotations and overlays
-                removeAnnotations()
-                removeOverlays()
+        let nearByLocationIndex = findNearByLocationIndex(coordinate: doubleTapCoordinate)
         
-                self.places = [Place]()
-                // remove annotations and overlays and return
-                return
+        // if location == -1 then the location is not nearby location
+        if nearByLocationIndex == -1 {
+            switch placesCount {
+                case 0:
+                    title = "A"
+                    self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
+                    break
+                
+                case 1:
+                    title = "B"
+                    self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
+                    break
+
+                case 2:
+                    title = "C"
+                    self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
+                    
+                    addTriangle()
+                    displayDistanceBetweenMarkers()
+                    break
+                
+                default:
+                    // remove annotations and overlays
+                    removeAnnotations()
+                    removeOverlays()
+            
+                    self.places = [Place]()
+                    // remove annotations and overlays and return
+                    return
+            }
+        } else {
+            self.removePlace(index: nearByLocationIndex)
+            removeOverlays()
+            removeAnnotations()
+            print("places count \(self.places.count)")
+            
+            for place in self.places {
+                let annotation = MKPointAnnotation()
+                // set the coordinate
+                annotation.coordinate = doubleTapCoordinate
+                // set the title
+                annotation.title = title
+                
+                // add annotation on map
+                self.mapView.addAnnotation(annotation)
+                let annotationView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: "markerPin")
+                annotationView.canShowCallout = true
+                annotationView.rightCalloutAccessoryView = UIButton(type: .detailDisclosure)
+            }
+            
+            for overlay in self.mapView.overlays  {
+                if overlay.title == places[nearByLocationIndex].title {
+                    self.mapView.removeOverlay(overlay)
+                }
+            }
+            
         }
         
         // create tap annotation
@@ -138,6 +169,21 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         // add annotation on map
         self.mapView.addAnnotation(tapAnnotation)
+    }
+    
+    func removePlace (index: Int) {
+        places.remove(at: index)
+    }
+    
+    // finds the index of nearest location and return the index
+    func findNearByLocationIndex (coordinate: CLLocationCoordinate2D) -> Int {
+        for (index, place) in places.enumerated() {
+            if (calculateDistanceBetweenTwoLocation(sourceLocation: coordinate, destinationLocation: place.coordinate) < 500){
+               return index
+           }
+       }
+        
+       return -1;
     }
     
     public func addDoubleTapGestureRecognizer () {
@@ -272,6 +318,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         let resultHyp = sqrt(x * x + y * y);
         let resultLat = atan2(z, resultHyp);
         let result = CLLocationCoordinate2D(latitude: CLLocationDegrees(GLKMathRadiansToDegrees(Float(resultLat))), longitude: CLLocationDegrees(GLKMathRadiansToDegrees(Float(resultLong))));
+        
         return result;
     }
 }
