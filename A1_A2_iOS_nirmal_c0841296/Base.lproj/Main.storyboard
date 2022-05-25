@@ -19,16 +19,13 @@
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="lOS-PR-PSO">
                                 <rect key="frame" x="0.0" y="44" width="414" height="818"/>
                             </mapView>
-                            <button opaque="NO" contentMode="scaleToFill" ambiguous="YES" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="0IP-Vt-8vG">
-                                <rect key="frame" x="289" y="748" width="105" height="64"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="200" id="Ze6-NT-qkd"/>
-                                    <constraint firstAttribute="width" constant="100" id="at5-nE-BHF"/>
-                                </constraints>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="RN6-7A-aai">
+                                <rect key="frame" x="311" y="774" width="45" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <state key="normal" title="Button"/>
                                 <buttonConfiguration key="configuration" style="plain" image="location.fill" catalog="system"/>
                                 <connections>
-                                    <action selector="displayRouteBetweenMarkers:" destination="BYZ-38-t0r" eventType="touchUpInside" id="U68-h3-Huo"/>
+                                    <action selector="displayRouteBetweenMarkers:" destination="BYZ-38-t0r" eventType="touchUpInside" id="QUd-K8-iSX"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -39,7 +36,6 @@
                             <constraint firstItem="lOS-PR-PSO" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="JRC-OW-Byk"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="lOS-PR-PSO" secondAttribute="trailing" id="Sgt-13-Rzo"/>
                             <constraint firstItem="lOS-PR-PSO" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="eUa-XE-SeQ"/>
-                            <constraint firstItem="0IP-Vt-8vG" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="750" id="xAn-Ep-3O8"/>
                         </constraints>
                     </view>
                     <connections>

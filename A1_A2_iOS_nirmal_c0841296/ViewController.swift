@@ -37,9 +37,11 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
 
     @IBAction func displayRouteBetweenMarkers(_ sender: UIButton) {
         // draw route between markers
-        drawRouteBetweenMarkers(source: places[0].coordinate, destination: places[1].coordinate)
-        drawRouteBetweenMarkers(source: places[1].coordinate, destination: places[2].coordinate)
-        drawRouteBetweenMarkers(source: places[2].coordinate, destination: places[0].coordinate)
+        if self.places.count == 3 {
+            drawRouteBetweenMarkers(source: places[0].coordinate, destination: places[1].coordinate)
+            drawRouteBetweenMarkers(source: places[1].coordinate, destination: places[2].coordinate)
+            drawRouteBetweenMarkers(source: places[2].coordinate, destination: places[0].coordinate)
+        }
     }
     
     public func requestLocationAccessAuthorization () {
