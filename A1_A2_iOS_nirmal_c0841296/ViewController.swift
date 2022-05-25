@@ -114,6 +114,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                 self.places.append(Place(title: title, coordinate: doubleTapCoordinate))
                 
                 addTriangle()
+                displayDistanceBetweenMarkers()
                 break
             
             default:
@@ -146,6 +147,28 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         self.mapView.addGestureRecognizer(tapGestureRecognizer)
     }
     
+    func displayDistanceBetweenMarkers() {
+        let coordinate1 = getCenterCoordinateBetweenTwoPoints([places[0].coordinate, places[1].coordinate])
+        let coordinate2 = getCenterCoordinateBetweenTwoPoints([places[1].coordinate, places[2].coordinate])
+        let coordinate3 = getCenterCoordinateBetweenTwoPoints([places[2].coordinate, places[0].coordinate])
+        
+        let annotation1 = MKPointAnnotation()
+        annotation1.coordinate = coordinate1
+        annotation1.title = String(format: "%.2f", calculateDistanceBetweenTwoLocation(sourceLocation: coordinate1, destinationLocation: coordinate2))
+        
+        let annotation2 = MKPointAnnotation()
+        annotation2.coordinate = coordinate2
+        annotation2.title = String(format: "%.2f", calculateDistanceBetweenTwoLocation(sourceLocation: coordinate2, destinationLocation: coordinate3))
+        
+        let annotation3 = MKPointAnnotation()
+        annotation3.coordinate = coordinate3
+        annotation3.title = String(format: "%.2f", calculateDistanceBetweenTwoLocation(sourceLocation: coordinate3, destinationLocation: coordinate1))
+        
+        self.mapView.addAnnotation(annotation1)
+        self.mapView.addAnnotation(annotation2)
+        self.mapView.addAnnotation(annotation3)
+    }
+    
     func addTriangle() {
         // make coordinates array
         let coordinates = places.map {$0.coordinate}
@@ -169,16 +192,22 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         }
     }
     
-    public func calculateDistanceBetweenUserAndMarker (markerLocation: CLLocationCoordinate2D) -> Double {
+    public func calculateDistanceBetweenTwoLocation (sourceLocation: CLLocationCoordinate2D, destinationLocation: CLLocationCoordinate2D?) -> Double {
         var distance: Double = 0
+        var destination = destinationLocation
         
-        if let uLocation = currentUserLocation {
+        if destination == nil {
+            destination = currentUserLocation
+        }
+        
+        if let destinationMarkerLocation = destination {
             // create current user location
-            let currentUserLocation = CLLocation(latitude: uLocation.latitude, longitude: uLocation.longitude)
+            let sourceLocation = CLLocation(latitude: sourceLocation.latitude, longitude: sourceLocation.longitude)
             
             // calculate distance from current user location
-            distance = currentUserLocation.distance(from: CLLocation(latitude: markerLocation.latitude, longitude: markerLocation.longitude))
+            distance = sourceLocation.distance(from: CLLocation(latitude: destinationMarkerLocation.latitude, longitude: destinationMarkerLocation.longitude))
         }
+        
         
         return distance
     }
@@ -219,12 +248,34 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
 //            self.map.setRegion(MKCoordinateRegion(rect), animated: true)
         }
     }
+    
+    func getCenterCoordinateBetweenTwoPoints(_ LocationPoints: [CLLocationCoordinate2D]) -> CLLocationCoordinate2D{
+        var x:Float = 0.0;
+        var y:Float = 0.0;
+        var z:Float = 0.0;
+        for points in LocationPoints {
+            let lat = GLKMathDegreesToRadians(Float(points.latitude));
+            let long = GLKMathDegreesToRadians(Float(points.longitude));
+
+            x += cos(lat) * cos(long);
+
+            y += cos(lat) * sin(long);
+
+            z += sin(lat);
+        }
+        x = x / Float(LocationPoints.count);
+        y = y / Float(LocationPoints.count);
+        z = z / Float(LocationPoints.count);
+        let resultLong = atan2(y, x);
+        let resultHyp = sqrt(x * x + y * y);
+        let resultLat = atan2(z, resultHyp);
+        let result = CLLocationCoordinate2D(latitude: CLLocationDegrees(GLKMathRadiansToDegrees(Float(resultLat))), longitude: CLLocationDegrees(GLKMathRadiansToDegrees(Float(resultLong))));
+        return result;
+    }
 }
 
 extension ViewController: MKMapViewDelegate {
     // for displaying annotation
-    
-
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         if overlay is MKPolygon {
             let rendrer = MKPolygonRenderer(overlay: overlay)
@@ -244,6 +295,7 @@ extension ViewController: MKMapViewDelegate {
         
         return MKOverlayRenderer()
     }
+    
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         switch annotation.title {
             case "A", "B", "C":
@@ -263,7 +315,7 @@ extension ViewController: MKMapViewDelegate {
             let markerLocation = annotation.coordinate
             
             // calling function to calculate the distance
-            let distance = calculateDistanceBetweenUserAndMarker(markerLocation: markerLocation)
+            let distance = calculateDistanceBetweenTwoLocation(sourceLocation: markerLocation, destinationLocation: nil)
             
             displayAnnotationAlert (distance: distance)
         }
