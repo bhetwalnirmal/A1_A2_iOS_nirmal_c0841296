@@ -17,6 +17,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     var places: [Place] = [Place]()
     // user location
     var currentUserLocation: CLLocationCoordinate2D? = nil
+    var markerMidPointTitles: [String] = [String]()
     
     @IBOutlet weak var mapView: MKMapView!
     
@@ -38,6 +39,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     @IBAction func displayRouteBetweenMarkers(_ sender: UIButton) {
         // draw route between markers
         if self.places.count == 3 {
+            removeMidPointMarker()
             drawRouteBetweenMarkers(source: places[0].coordinate, destination: places[1].coordinate)
             drawRouteBetweenMarkers(source: places[1].coordinate, destination: places[2].coordinate)
             drawRouteBetweenMarkers(source: places[2].coordinate, destination: places[0].coordinate)
@@ -226,15 +228,21 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         let annotation1 = MKPointAnnotation()
         annotation1.coordinate = coordinate1
-        annotation1.title = String(format: "%.2f", calculateDistanceBetweenTwoLocation(sourceLocation: coordinate1, destinationLocation: coordinate2))
+        let title1 = String(format: "%.2f", calculateDistanceBetweenTwoLocation(sourceLocation: coordinate1, destinationLocation: coordinate2))
+        markerMidPointTitles.append(title1)
+        annotation1.title = title1
         
         let annotation2 = MKPointAnnotation()
         annotation2.coordinate = coordinate2
-        annotation2.title = String(format: "%.2f", calculateDistanceBetweenTwoLocation(sourceLocation: coordinate2, destinationLocation: coordinate3))
+        let title2 = String(format: "%.2f", calculateDistanceBetweenTwoLocation(sourceLocation: coordinate2, destinationLocation: coordinate3))
+        markerMidPointTitles.append(title2)
+        annotation2.title = title2
         
         let annotation3 = MKPointAnnotation()
         annotation3.coordinate = coordinate3
-        annotation3.title = String(format: "%.2f", calculateDistanceBetweenTwoLocation(sourceLocation: coordinate3, destinationLocation: coordinate1))
+        let title3 = String(format: "%.2f", calculateDistanceBetweenTwoLocation(sourceLocation: coordinate3, destinationLocation: coordinate1))
+        markerMidPointTitles.append(title3)
+        annotation3.title = title3
         
         self.mapView.addAnnotation(annotation1)
         self.mapView.addAnnotation(annotation2)
@@ -284,12 +292,25 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         return distance
     }
     
+    func removeMidPointMarker () {
+        for title in self.markerMidPointTitles {
+            for annotation in self.mapView.annotations {
+                if annotation.title == title {
+                    self.mapView.removeAnnotation(annotation)
+                }
+            }
+        }
+        
+        markerMidPointTitles = [String]()
+    }
+    
     public func drawRouteBetweenMarkers (source: CLLocationCoordinate2D, destination: CLLocationCoordinate2D) {
         if self.places.count < 3 {
             return
         }
         
         removeOverlays()
+        removeMidPointMarker()
         
         let sourcePlaceMark = MKPlacemark(coordinate: source)
         let destinationPlaceMark = MKPlacemark(coordinate: destination)
